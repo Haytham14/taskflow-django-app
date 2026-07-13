@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord documents · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion documentaire</p>
+    <h1>Tableau de bord documents</h1>
+  </div>
+  {% if request.user.is_admin_role or perms.documents.add_document %}
+  <a href="{% url 'documents:create' %}" class="btn btn-primary">+ Nouveau document</a>
+  {% endif %}
+</header>
+
+<section class="document-stat-grid">
+  <div class="stat-card stat-total">
+    <span class="stat-value">{{ total_documents }}</span>
+    <span class="stat-label">Documents actifs</span>
+  </div>
+  <div class="stat-card stat-progress">
+    <span class="stat-value">{{ attachment_count }}</span>
+    <span class="stat-label">Pièces jointes indexées</span>
+  </div>
+  <div class="stat-card stat-done">
+    <span class="stat-value">{{ manual_count }}</span>
+    <span class="stat-label">Ajouts manuels</span>
+  </div>
+  <div class="stat-card stat-verify">
+    <span class="stat-value">{{ archive_count }}</span>
+    <span class="stat-label">Archives</span>
+  </div>
+</section>
+
+<section class="document-dashboard-grid">
+  <div class="panel">
+    <div class="panel-title-row">
+      <h2>Documents récents</h2>
+      <a href="{% url 'documents:all' %}">Voir tout</a>
+    </div>
+    <div class="document-table-wrap">
+      <table class="data-table document-recent-table">
+        <thead>
+          <tr><th>Document</th><th>Source</th><th>Ajouté par</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for document in recent_documents %}
+          <tr>
+            <td><a href="{% url 'documents:detail' document.pk %}"><strong>{{ document.title }}</strong></a></td>
+            <td>{{ document.get_source_module_display }}</td>
+            <td>{{ document.uploaded_by.name|default:"Système" }}</td>
+            <td>{{ document.created_at|date:"d/m/Y" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="empty-row">Aucun document.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="panel document-source-summary">
+    <h2>Répartition par source</h2>
+    {% for source in source_stats %}
+    <div class="document-source-row">
+      <span>{{ source.label }}</span>
+      <strong>{{ source.total }}</strong>
+    </div>
+    {% empty %}
+    <p class="empty-row">Aucune source disponible.</p>
+    {% endfor %}
+    <div class="document-storage-total">
+      <span>Volume indexé</span>
+      <strong>{{ total_size|filesizeformat }}</strong>
+    </div>
+  </aside>
+</section>
+{% endblock %}

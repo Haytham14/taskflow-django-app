@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if form.instance.pk %}Modifier la tâche{% else %}Nouvelle tâche{% endif %} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">{{ form_eyebrow|default:"Tableau des tâches" }}</p>
+    <h1>
+      {% if form_title %}
+        {{ form_title }}
+      {% elif form.instance.pk %}
+        Modifier la tâche
+      {% else %}
+        Nouvelle tâche
+      {% endif %}
+    </h1>
+  </div>
+</header>
+
+<div class="panel form-panel">
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="field">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% if field.name == "assignees" %}
+      <p class="help-text">Recherchez et sélectionnez une ou plusieurs personnes.</p>
+      <div class="project-member-picker task-member-picker">
+        <div class="project-members-native">
+          {{ field }}
+        </div>
+        <div class="member-search-box">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-search"></use></svg>
+          <input type="search" placeholder="Rechercher et ajouter des membres..." aria-label="Rechercher des membres">
+        </div>
+        <div class="selected-member-chips" aria-live="polite"></div>
+        <div class="member-option-list"></div>
+      </div>
+      {% elif field.field.widget.input_type == "file" %}
+      <div class="file-field">
+        {{ field }}
+        <label class="file-field-button" for="{{ field.id_for_label }}">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-paperclip"></use></svg>
+          Choisir un fichier
+        </label>
+        <span class="file-field-name" data-placeholder="Aucun fichier sélectionné">Aucun fichier sélectionné</span>
+      </div>
+      {% else %}
+      {{ field }}
+      {% endif %}
+      {% if field.help_text %}<p class="help-text">{{ field.help_text }}</p>{% endif %}
+      {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+    <div class="form-actions">
+      <a href="{{ cancel_url|default:'/' }}" class="btn btn-ghost">Annuler</a>
+      {% if form.instance.pk %}
+      <a href="{% url 'tasks:task_delete' form.instance.pk %}" class="btn btn-danger">Supprimer</a>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">Enregistrer la tâche</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/file-input.js' %}"></script>
+<script src="{% static 'js/project-form.js' %}?v=20260712-task-members"></script>
+{% endblock %}

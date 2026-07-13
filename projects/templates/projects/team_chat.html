@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% load static chat_extras %}
+{% block title %}#{{ active_channel.name }} · Chat équipe · TaskFlow{% endblock %}
+{% block content %}
+<section class="taskflow-chat-page">
+  <header class="page-header taskflow-chat-header">
+    <div>
+      <p class="eyebrow">Espace de travail</p>
+      <h1>Chat équipe</h1>
+    </div>
+    {% if user.is_admin_role %}
+    <a href="{% url 'projects:team_channel_create' %}" class="btn btn-primary taskflow-chat-new-channel">+ Nouveau canal</a>
+    {% endif %}
+  </header>
+
+  <div class="taskflow-chat-layout">
+    <aside class="chat-card conversations-card">
+      <h2>Conversations</h2>
+      <div class="conversation-search">
+        <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-search"></use></svg>
+        <input type="search" placeholder="Rechercher..." aria-label="Rechercher une conversation">
+      </div>
+
+      <div class="conversation-section">
+        <h3>Canaux</h3>
+        <nav aria-label="Canaux">
+          {% for channel in channels %}
+          <a
+            href="{% url 'projects:team_chat_channel' channel.slug %}"
+            class="conversation-channel {% if channel.pk == active_channel.pk %}active{% endif %}"
+          >
+            <span># {{ channel.name }}</span>
+            {% if channel.message_count %}<strong>{{ channel.message_count }}</strong>{% endif %}
+          </a>
+          {% empty %}
+          <p class="muted">Aucun canal.</p>
+          {% endfor %}
+        </nav>
+      </div>
+
+      <div class="conversation-section">
+        <h3>Messages directs</h3>
+        <div class="direct-list">
+          {% for member in direct_users %}
+          <div class="direct-user">
+            <span class="chat-avatar small">{{ member.name|default:"?"|first|upper }}</span>
+            <span>{{ member.name }}</span>
+            <i aria-hidden="true"></i>
+          </div>
+          {% empty %}
+          <p class="muted">Aucun membre actif.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+
+    <main class="chat-card main-chat-card">
+      <header class="main-chat-header">
+        <div>
+          <h2># {{ active_channel.name }}</h2>
+          <p>
+            {% if active_channel.description %}
+              {{ active_channel.description }}
+            {% else %}
+              Canal équipe
+            {% endif %}
+            · {{ member_count }} membres
+          </p>
+        </div>
+        <div class="main-chat-actions">
+          <div class="channel-avatar-stack">
+            {% for member in channel_avatars %}
+            <span class="chat-avatar mini">{{ member.name|default:"?"|first|upper }}</span>
+            {% endfor %}
+          </div>
+          <button type="button" aria-label="Rechercher"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-search"></use></svg></button>
+          <button type="button" aria-label="Options"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-dots"></use></svg></button>
+        </div>
+      </header>
+
+      <div class="pinned-message">
+        <strong><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-pin"></use></svg> Message épinglé</strong>
+        <p>Les demandes critiques doivent être traitées avant 17h.</p>
+      </div>
+
+      <div class="chat-message-list">
+        {% for item in messages_list reversed %}
+        <article class="context-chat-message">
+          <span class="chat-avatar">{{ item.author.name|default:"?"|first|upper }}</span>
+          <div class="context-chat-message-body">
+            <div class="context-chat-message-meta">
+              <strong>{{ item.author.name|default:"Utilisateur supprimé" }}</strong>
+              <span>{{ item.created_at|date:"H:i" }}</span>
+            </div>
+            <p>{{ item.body|mentionize|linebreaksbr }}</p>
+
+            {% if item.attachments.all %}
+            <div class="context-file-list">
+              {% for attachment in item.attachments.all %}
+              <a href="{% url 'projects:team_attachment_download' attachment.pk %}" class="context-file-card">
+                <span class="file-type-badge">{{ attachment.file_type_label }}</span>
+                <span>
+                  <strong>{{ attachment.original_name|default:attachment.file.name }}</strong>
+                  {% if attachment.filesize_display %}<small>{{ attachment.file_type_label }} · {{ attachment.filesize_display }}</small>{% endif %}
+                </span>
+              </a>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="reaction-row">
+              <span><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-thumbs-up"></use></svg> 2</span>
+              <span><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-chat"></use></svg></span>
+            </div>
+          </div>
+        </article>
+        {% empty %}
+        <div class="chat-empty-state">
+          <h2># {{ active_channel.name }}</h2>
+          <p>Envoyez le premier message de ce canal.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <form method="post" class="chat-composer" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.body }}
+        {% for error in form.body.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        <div class="chat-composer-footer">
+          <div class="chat-composer-tools">
+            <button type="button" aria-label="Emoji"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-smile"></use></svg></button>
+            <div class="file-field chat-file-field">
+              {{ form.attachment }}
+              <label for="{{ form.attachment.id_for_label }}" aria-label="Joindre un fichier"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-paperclip"></use></svg></label>
+              <span class="file-field-name" data-placeholder="Aucun fichier">Aucun fichier</span>
+            </div>
+            <button type="button" aria-label="Mention">@</button>
+          </div>
+          <button type="submit" class="chat-send-button">Envoyer</button>
+        </div>
+        {% for error in form.attachment.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </form>
+    </main>
+
+    <aside class="chat-card discussion-context">
+      <h2>Contexte de la discussion</h2>
+
+      <section class="context-section">
+        <h3>Tâches liées</h3>
+        <div class="context-task-list">
+          {% for task in linked_tasks %}
+          <article class="context-task-card">
+            <span class="badge badge-priority-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+            <h4>{{ task.title }}</h4>
+            <div class="context-assignee">
+              {% for assignee in task.assignees.all %}
+              <span class="chat-avatar small">{{ assignee.name|default:"?"|first|upper }}</span>
+              <span>{{ assignee.name }}</span>
+              {% empty %}<span>Non assigné</span>{% endfor %}
+            </div>
+            <p>Statut : {{ task.get_status_display }}</p>
+          </article>
+          {% empty %}
+          <p class="muted">Aucune tâche liée pour le moment.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="context-section">
+        <h3>Fichiers partagés</h3>
+        <div class="shared-file-list">
+          {% for attachment in shared_files %}
+          <a href="{% url 'projects:team_attachment_download' attachment.pk %}" class="shared-file-row">
+            <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-document"></use></svg>
+            <span>
+              <strong>{{ attachment.original_name|default:attachment.file.name }}</strong>
+              {% if attachment.filesize_display %}<small>{{ attachment.file_type_label }} · {{ attachment.filesize_display }}</small>{% endif %}
+            </span>
+          </a>
+          {% empty %}
+          <p class="muted">Aucun fichier partagé.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="context-section">
+        <h3>Membres du canal</h3>
+        <div class="context-member-list">
+          {% for member in channel_members %}
+          <div class="context-member-row">
+            <span class="chat-avatar">{{ member.name|default:"?"|first|upper }}</span>
+            <span>
+              <strong>{{ member.name }}</strong>
+              <small>{{ member.get_role_display }}</small>
+            </span>
+            <i aria-hidden="true"></i>
+          </div>
+          {% empty %}
+          <p class="muted">Aucun membre actif.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/file-input.js' %}"></script>
+{% endblock %}

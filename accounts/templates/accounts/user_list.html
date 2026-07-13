@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">Gestion des utilisateurs</p><h1>Utilisateurs</h1><p class="muted">Gérez les comptes, leurs rôles et leur service d’appartenance.</p></div>
+  {% if user.is_admin_role or perms.accounts.add_user %}<a href="{% url 'accounts:user_create' %}" class="btn btn-primary">+ Nouvel utilisateur</a>{% endif %}
+</header>
+
+<section class="stat-grid user-admin-stats role-stat-grid">
+  <article class="stat-card"><span>Utilisateurs</span><strong>{{ total_users }}</strong></article>
+  <article class="stat-card"><span>Comptes actifs</span><strong>{{ active_users }}</strong></article>
+  <article class="stat-card"><span>Sans rôle attribué</span><strong>{{ unassigned_users }}</strong></article>
+</section>
+
+<form method="get" class="panel user-management-filters">
+  <input type="search" name="q" value="{{ request.GET.q }}" placeholder="Nom ou adresse e-mail..." aria-label="Rechercher un utilisateur">
+  <select name="role" aria-label="Filtrer par rôle">
+    <option value="">Tous les rôles</option>
+    {% for role in roles %}<option value="{{ role.pk }}" {% if request.GET.role == role.pk|stringformat:'s' %}selected{% endif %}>{{ role.name }}</option>{% endfor %}
+  </select>
+  <select name="department" aria-label="Filtrer par service">
+    <option value="">Tous les services</option>
+    {% for department in departments %}<option value="{{ department.pk }}" {% if request.GET.department == department.pk|stringformat:'s' %}selected{% endif %}>{{ department.name }}</option>{% endfor %}
+  </select>
+  <select name="status" aria-label="Filtrer par statut">
+    <option value="">Tous les statuts</option>
+    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actifs</option>
+    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactifs</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Filtrer</button>
+</form>
+
+<section class="panel user-management-panel">
+  <div class="panel-title-row"><h2>Comptes utilisateurs</h2><div class="header-actions"><a href="{% url 'user_roles' %}" class="btn btn-ghost">Gérer les rôles</a><a href="{% url 'user_departments' %}" class="btn btn-ghost">Gérer les services</a></div></div>
+  <div class="user-management-table-wrap">
+    <table class="data-table users-table">
+      <thead><tr><th>Utilisateur</th><th>Rôle et permissions</th><th>Service</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for member in users %}
+        <tr>
+          <td><span class="table-user"><span class="avatar">{{ member.name|default:"?"|first|upper }}</span><span><strong>{{ member.name }}</strong><small>{{ member.email }}</small></span></span></td>
+          <td>{% if member.custom_role %}<span class="access-badge role-pill">{{ member.custom_role.name }}</span>{% else %}<span class="muted">Non attribué</span>{% endif %}</td>
+          <td>{{ member.department.name|default:"Non affecté" }}</td>
+          <td>{% if member.is_active %}<span class="badge badge-active">Actif</span>{% else %}<span class="badge badge-inactive">Inactif</span>{% endif %}</td>
+          <td class="user-actions-cell"><div class="row-actions user-row-actions">
+            {% if user.is_admin_role or perms.accounts.change_user %}<a href="{% url 'accounts:user_update' member.pk %}" class="project-action-btn project-action-open user-action-btn"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-edit"></use></svg>Modifier</a><a href="{% url 'accounts:user_reset_password' member.pk %}" class="project-action-btn project-action-edit user-action-btn" title="Réinitialiser le mot de passe"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-key"></use></svg>MDP</a>{% endif %}
+            {% if member.pk != user.pk and user.is_admin_role or member.pk != user.pk and perms.accounts.delete_user %}<a href="{% url 'accounts:user_delete' member.pk %}" class="project-action-btn project-action-delete user-action-btn"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-trash"></use></svg>Supprimer</a>{% endif %}
+          </div></td>
+        </tr>
+        {% empty %}<tr><td colspan="5" class="empty-row">Aucun utilisateur ne correspond aux filtres.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

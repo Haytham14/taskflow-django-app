@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Calendrier des tâches · TaskFlow{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/task-calendar.css' %}?v=20260711-color-hover-fixes">
+{% endblock %}
+
+{% block content %}
+<section
+  class="task-calendar-page"
+  id="task-calendar"
+  data-api-url="/api/tasks/calendar/"
+  data-create-url="{% url 'tasks:task_create' %}"
+  data-can-create="{{ user.is_admin_role|yesno:'true,false' }}"
+>
+  <header class="calendar-page-header">
+    <div>
+      <p class="eyebrow">Gestion du travail</p>
+      <h1>Calendrier des tâches</h1>
+      <p class="calendar-subtitle">Planifiez et suivez les échéances de votre équipe.</p>
+    </div>
+    {% if user.is_admin_role or perms.tasks.add_task %}
+    <a href="{% url 'tasks:task_create' %}?next={% url 'tasks:calendar' %}" class="btn btn-primary" id="calendar-new-task">
+      + Nouvelle tâche
+    </a>
+    {% endif %}
+  </header>
+
+  <div class="calendar-toolbar">
+    <div class="calendar-period-navigation">
+      <button type="button" class="calendar-icon-button" id="calendar-previous" aria-label="Période précédente">‹</button>
+      <button type="button" class="calendar-icon-button" id="calendar-next" aria-label="Période suivante">›</button>
+      <strong id="calendar-period-label"></strong>
+    </div>
+
+    <label class="calendar-search">
+      <span aria-hidden="true">⌕</span>
+      <input type="search" id="calendar-search" placeholder="Rechercher une tâche..." aria-label="Rechercher une tâche">
+    </label>
+  </div>
+
+  <div class="calendar-filters" aria-label="Filtres">
+    <select id="calendar-project-filter" aria-label="Filtrer par projet">
+      <option value="">Tous les projets</option>
+      {% for project in projects %}<option value="{{ project.pk }}">{{ project.name }}</option>{% endfor %}
+    </select>
+    <select id="calendar-assignee-filter" aria-label="Filtrer par responsable">
+      <option value="">Tous les responsables</option>
+      {% for assignee in assignees %}<option value="{{ assignee.pk }}">{{ assignee.name }}</option>{% endfor %}
+    </select>
+    <select id="calendar-priority-filter" aria-label="Filtrer par priorité">
+      <option value="">Toutes les priorités</option>
+      {% for value, label in priority_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select>
+    <select id="calendar-status-filter" aria-label="Filtrer par statut">
+      <option value="">Tous les statuts</option>
+      {% for value, label in status_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+
+  <div class="calendar-statistics" id="calendar-statistics" aria-live="polite">
+    <article><strong data-stat="total">–</strong><span>Tâches dans la période</span></article>
+    <article class="is-overdue"><strong data-stat="overdue">–</strong><span>En retard</span></article>
+    <article class="is-completed"><strong data-stat="completed">–</strong><span>Terminées</span></article>
+    <button type="button" class="calendar-stat-card is-undated" id="calendar-undated">
+      <strong data-stat="without_due_date">–</strong><span>Sans date limite</span>
+    </button>
+  </div>
+
+  <div class="calendar-surface">
+    <div class="calendar-loading" id="calendar-loading">Chargement du calendrier...</div>
+    <div id="calendar-content"></div>
+  </div>
+
+  <div class="calendar-modal-backdrop" id="calendar-modal-backdrop" hidden></div>
+  <section class="calendar-day-modal" id="calendar-day-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-modal-title" hidden>
+    <header>
+      <h2 id="calendar-modal-title">Tâches</h2>
+      <button type="button" id="calendar-modal-close" aria-label="Fermer">×</button>
+    </header>
+    <div id="calendar-modal-list"></div>
+  </section>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/task-calendar.js' %}?v=20260713-month-label"></script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ task.title }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><a href="{% url 'tasks:board' %}">&larr; Tableau des tâches</a></p>
+    <h1>{{ task.title }}</h1>
+  </div>
+  {% if user.is_admin_role %}
+  <div class="header-actions">
+    <a href="{% url 'tasks:task_update' task.pk %}" class="btn btn-ghost">Modifier la tâche</a>
+    <a href="{% url 'tasks:task_delete' task.pk %}" class="btn btn-danger">Supprimer la tâche</a>
+  </div>
+  {% endif %}
+</header>
+
+<div class="panel">
+  <div class="task-detail-meta">
+    <span class="badge badge-status-{{ task.status|lower }}">{{ task.get_status_display }}</span>
+    <span class="badge badge-priority-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+    <span class="assignee task-assignees">
+      {% for assignee in task.assignees.all %}
+      <span class="avatar" title="{{ assignee.name }}">{{ assignee.name|default:"?"|first|upper }}</span>
+      <span class="assignee-name">{{ assignee.name }}</span>
+      {% empty %}<span>Non assigné</span>{% endfor %}
+    </span>
+  </div>
+  {% if task.habilitation_request %}
+  <p class="task-linked-request">
+    Demande d'habilitation :
+    <a href="{% url 'access_control:request_detail' task.habilitation_request.pk %}">
+      {{ task.habilitation_request.reference }}
+    </a>
+  </p>
+  {% endif %}
+  <div class="task-detail-deadline deadline-{{ task.deadline_state }}">
+    <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-timer"></use></svg>
+    {% if task.deadline %}
+      <strong>Temps restant :</strong>
+      <span>{{ task.deadline_remaining_label }}</span>
+      <span class="muted">Délai : {{ task.deadline|date:"j F Y H:i" }}</span>
+    {% else %}
+      <strong>Temps restant :</strong>
+      <span>Aucun délai</span>
+    {% endif %}
+  </div>
+  {% if task.description %}
+  <p class="task-detail-description">{{ task.description|linebreaksbr }}</p>
+  {% else %}
+  <p class="muted">Aucune description.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Pièces jointes</h2>
+  {% if attachments %}
+  <ul class="attachment-list">
+    {% for attachment in attachments %}
+    <li class="attachment-row">
+      <a href="{% url 'tasks:download_attachment' attachment.pk %}">{{ attachment.original_name|default:attachment.file.name }}</a>
+      <span class="muted">
+        {{ attachment.filesize_display }} &middot;
+        {{ attachment.uploaded_by.name|default:"Inconnu" }} &middot;
+        {{ attachment.uploaded_at|date:"j F Y" }}
+      </span>
+      {% if user.is_admin_role or attachment.uploaded_by_id == user.id %}
+      <form method="post" action="{% url 'tasks:delete_attachment' attachment.pk %}" class="inline-form">
+        {% csrf_token %}
+        <button type="submit" class="danger-link text-button">Supprimer</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Aucun fichier joint pour l'instant.</p>
+  {% endif %}
+
+  <form method="post" action="{% url 'tasks:add_attachment' task.pk %}" enctype="multipart/form-data" class="upload-box">
+    {% csrf_token %}
+    <div class="attachment-form">
+      <div class="file-field">
+        {{ attachment_form.file }}
+        <label class="file-field-button" for="{{ attachment_form.file.id_for_label }}">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-paperclip"></use></svg>
+          Choisir un fichier
+        </label>
+        <span class="file-field-name" data-placeholder="Aucun fichier sélectionné">Aucun fichier sélectionné</span>
+      </div>
+      <button type="submit" class="btn btn-primary">Téléverser</button>
+    </div>
+    {% for error in attachment_form.file.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    <p class="attachment-hint">JPG, JPEG, PNG, PDF, DOC/DOCX, XLS/XLSX, TXT, CSV ou SQL. Taille max : 10 Mo.</p>
+  </form>
+</div>
+
+<section class="panel task-comments-panel">
+  <div class="comments-title-row">
+    <span class="comments-title-icon" aria-hidden="true">
+      <svg class="ui-icon"><use href="#nav-icon-chat"></use></svg>
+    </span>
+    <div>
+      <h2>Commentaires</h2>
+      <p class="comments-count">{{ comments|length }} commentaire{{ comments|length|pluralize }}</p>
+    </div>
+  </div>
+  {% if comments %}
+  <ul class="comment-list">
+    {% for comment in comments %}
+    <li class="comment-row">
+      <div class="comment-head">
+        <span class="table-user comment-author">
+          <span class="avatar">{{ comment.author.name|default:"?"|first|upper }}</span>
+          <strong>{{ comment.author.name|default:"Utilisateur supprimé" }}</strong>
+        </span>
+        <span class="comment-date">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-clock"></use></svg>
+          {{ comment.created_at|date:"j F Y à H:i" }}
+        </span>
+      </div>
+      <p class="comment-body">{{ comment.body|linebreaksbr }}</p>
+      {% if user.is_admin_role or comment.author_id == user.id %}
+      <form method="post" action="{% url 'tasks:delete_comment' comment.pk %}" class="comment-delete-form">
+        {% csrf_token %}
+        <button type="submit" class="comment-delete-button">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-trash"></use></svg>
+          Supprimer
+        </button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="comments-empty">
+    <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-chat"></use></svg>
+    <p>Aucun commentaire pour l'instant.</p>
+  </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'tasks:add_comment' task.pk %}" class="comment-form">
+    {% csrf_token %}
+    <div class="comment-composer">
+      <span class="avatar comment-composer-avatar">{{ user.name|default:"?"|first|upper }}</span>
+      <div class="comment-composer-field">
+        {{ comment_form.body }}
+        {% for error in comment_form.body.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary comment-submit">
+        Publier
+        <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-send"></use></svg>
+      </button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/file-input.js' %}"></script>
+<script src="{% static 'js/task-comments.js' %}"></script>
+{% endblock %}

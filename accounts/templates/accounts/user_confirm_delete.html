@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Supprimer l'utilisateur · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h1>Supprimer l'utilisateur</h1>
+  </div>
+</header>
+
+<div class="panel form-panel">
+  <p>Voulez-vous vraiment supprimer <strong>{{ object.name }}</strong> ? Ses tâches assignées deviendront non assignées. Cette action est irréversible.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">Annuler</a>
+      <button type="submit" class="btn btn-danger">Supprimer l'utilisateur</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

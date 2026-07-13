@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Accès accordés · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Accès accordés</h1>
+  </div>
+</header>
+
+<div class="panel">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Collaborateur</th>
+        <th>Matricule</th>
+        <th>Habilitation</th>
+        <th>Type</th>
+        <th>Date début</th>
+        <th>Date fin</th>
+        <th>Statut</th>
+        <th>Accordé par</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for assignment in assignments %}
+      <tr>
+        <td>{{ assignment.user.name }}</td>
+        <td>{{ assignment.matricule }}</td>
+        <td>{{ assignment.habilitation.application }}</td>
+        <td>{% if assignment.request %}{{ assignment.request.get_access_type_display }}{% else %}-{% endif %}</td>
+        <td>{{ assignment.start_date|date:"j F Y" }}</td>
+        <td>
+          {{ assignment.end_date|date:"j F Y"|default:"Aucune date de fin" }}
+          {% if assignment.expires_soon %}<span class="access-badge access-status-info_requested">Expire bientôt</span>{% endif %}
+        </td>
+        <td><span class="access-badge assignment-status-{{ assignment.status|lower }}">{{ assignment.get_status_display }}</span></td>
+        <td>{{ assignment.granted_by.name|default:"-" }}</td>
+        <td class="table-actions">
+          {% if assignment.request %}<a href="{% url 'access_control:request_detail' assignment.request.pk %}" class="access-action access-action-primary">Ouvrir</a>{% endif %}
+          {% if request.user.is_admin_role %}<a href="{% url 'access_control:assignment_update' assignment.pk %}" class="access-action access-action-secondary">Modifier</a>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="empty-row">Aucun accès accordé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

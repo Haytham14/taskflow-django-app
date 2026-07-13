@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Services / Départements · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des utilisateurs</p>
+    <h1>Services / Départements</h1>
+  </div>
+  <a href="{% url 'accounts:user_list' %}" class="btn btn-primary">Voir les utilisateurs</a>
+</header>
+
+<section class="stat-grid user-admin-stats">
+  <article class="stat-card"><span>Services référencés</span><strong>{{ total_departments }}</strong></article>
+  <article class="stat-card"><span>Services actifs</span><strong>{{ active_departments }}</strong></article>
+  <article class="stat-card"><span>Utilisateurs couverts</span><strong>{{ covered_users }}</strong></article>
+</section>
+
+<div class="department-grid">
+  {% for department in departments %}
+  <article class="panel department-card">
+    <div class="department-card-head">
+      <span class="department-code">{{ department.code }}</span>
+      <span class="access-badge assignment-status-active">{{ department.status }}</span>
+    </div>
+    <h2>{{ department.name }}</h2>
+    <p class="muted">{{ department.scope }}</p>
+    <dl class="mini-definition-list">
+      <dt>Responsable</dt>
+      <dd>{{ department.manager.name|default:"À assigner" }}</dd>
+      <dt>Utilisateurs</dt>
+      <dd>{{ department.members }}</dd>
+    </dl>
+  </article>
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <h2>Organisation opérationnelle</h2>
+  <table class="data-table">
+    <thead><tr><th>Service</th><th>Code</th><th>Responsable</th><th>Périmètre</th><th>Effectif</th></tr></thead>
+    <tbody>
+      {% for department in departments %}
+      <tr>
+        <td><strong>{{ department.name }}</strong></td>
+        <td>{{ department.code }}</td>
+        <td>{{ department.manager.name|default:"À assigner" }}</td>
+        <td>{{ department.scope }}</td>
+        <td>{{ department.members }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Catalogue des habilitations · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Catalogue des habilitations</h1>
+  </div>
+  {% if request.user.is_admin_role %}
+  <a href="{% url 'access_control:catalog_create' %}" class="btn btn-primary">+ Nouvelle application</a>
+  {% endif %}
+</header>
+
+<form method="get" class="panel access-filter-bar">
+  <input type="search" name="q" value="{{ request.GET.q }}" class="input" placeholder="Application ou habilitation...">
+  <button type="submit" class="btn btn-primary">Rechercher</button>
+</form>
+
+<div class="panel catalog-table-panel">
+  <table class="data-table catalog-table">
+    <thead>
+      <tr>
+        <th>Application</th>
+        <th>Habilitations</th>
+        <th>Type d'accès</th>
+        <th>Responsable</th>
+        <th>Statut</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in habilitations %}
+      <tr>
+        <td><strong>{{ item.application }}</strong></td>
+        <td>
+          <ul class="catalog-habilitation-list">
+            {% for habilitation_item in item.items.all %}
+            <li>{{ habilitation_item.name }}</li>
+            {% endfor %}
+          </ul>
+        </td>
+        <td>
+          <ul class="catalog-habilitation-list">
+            {% for access_type in item.access_types.all %}
+            <li>{{ access_type.name }}</li>
+            {% endfor %}
+          </ul>
+        </td>
+        <td>{{ item.responsible.name|default:"-" }}</td>
+        <td><span class="access-badge catalog-status-{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
+        <td class="table-actions">
+          <a href="{% url 'access_control:catalog_detail' item.pk %}" class="access-action access-action-primary">Ouvrir</a>
+          {% if request.user.is_admin_role %}
+          <a href="{% url 'access_control:catalog_update' item.pk %}" class="access-action access-action-secondary">Modifier</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="empty-row">Aucune application.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

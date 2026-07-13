@@ -1,0 +1,26 @@
+databases:
+  - name: taskflow-db
+    plan: free
+    databaseName: taskflow
+    user: taskflow
+
+services:
+  - type: web
+    name: taskflow-django-app
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: python -m gunicorn task_manager.asgi:application -k uvicorn.workers.UvicornWorker
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: taskflow-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_TIME_ZONE
+        value: Africa/Casablanca
+      - key: WEB_CONCURRENCY
+        value: "4"

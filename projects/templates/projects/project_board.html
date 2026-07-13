@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static task_tags %}
+{% block title %}{{ project.name }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Projet</p>
+    <div class="project-board-title">
+      <h1>{{ project.name }}</h1>
+      <span class="badge project-status-{{ project.status|lower }}">{{ project.get_status_display }}</span>
+    </div>
+    {% if project.description %}<p class="muted">{{ project.description }}</p>{% endif %}
+    {% if project.status == "COMPLETED" %}<p class="project-completed-note">Projet terminé{% if project.completed_at %} le {{ project.completed_at|date:"j F Y" }}{% endif %}. Le tableau est en lecture seule.</p>{% endif %}
+  </div>
+  <div class="header-actions">
+    <a href="{% url 'projects:project_list' %}" class="btn btn-ghost">Tous les projets</a>
+    {% if project.status == "ACTIVE" and user.is_admin_role or project.status == "ACTIVE" and perms.tasks.add_task %}
+    <a href="{% url 'projects:project_task_create' project.pk %}" class="btn btn-primary">+ Nouvelle tâche</a>
+    {% endif %}
+  </div>
+</header>
+
+<section class="project-members">
+  <span class="muted">Équipe</span>
+  <span class="member-stack">
+    {% for member in project.members.all %}
+    <span class="avatar" title="{{ member.name }}">{{ member.name|default:"?"|first|upper }}</span>
+    {% empty %}
+    <span class="muted">Aucun membre assigné</span>
+    {% endfor %}
+  </span>
+</section>
+
+{% include "partials/date_filter.html" %}
+
+<div class="board" id="board">
+  {% for column in columns %}
+  <section class="board-column" data-status="{{ column.key }}">
+    <div class="board-column-header">
+      <h2>{{ column.label }}</h2>
+      <span class="count-pill">{{ column.tasks|length }}</span>
+    </div>
+    <div class="card-drop-zone" data-status="{{ column.key }}">
+      {% for task in column.tasks %}
+      <article
+        class="task-card priority-{{ task.priority|lower }}"
+        data-task-id="{{ task.pk }}"
+        data-href="{% url 'tasks:task_detail' task.pk %}"
+        data-status="{{ task.status }}"
+        {% if project.status == "ACTIVE" and user.is_admin_role or project.status == "ACTIVE" and task|is_task_assignee:user and not task.is_locked_for_members %}draggable="true"{% endif %}
+      >
+        <div class="task-card-top">
+          <span class="badge badge-priority-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+        </div>
+
+        <h3 class="task-title"><a href="{% url 'tasks:task_detail' task.pk %}">{{ task.title }}</a></h3>
+
+        <div class="task-card-meta">
+          <span class="assignee task-assignees {% if task.comment_count or task.attachment_count or task.assignees.all|length > 1 %}task-assignees-compact{% endif %}">
+            {% for assignee in task.assignees.all %}
+            <span class="avatar" title="{{ assignee.name }}">{{ assignee.name|default:"?"|first|upper }}</span>
+            {% if not task.comment_count and not task.attachment_count and task.assignees.all|length == 1 %}
+            <span class="assignee-name">{{ assignee.name }}</span>
+            {% endif %}
+            {% empty %}<span>Non assigné</span>{% endfor %}
+          </span>
+          <span class="task-counts">
+            {% if task.comment_count %}<span class="count-chip" title="Commentaires"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-chat"></use></svg> {{ task.comment_count }}</span>{% endif %}
+            {% if task.attachment_count %}<span class="count-chip" title="Pièces jointes"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-paperclip"></use></svg> {{ task.attachment_count }}</span>{% endif %}
+          </span>
+        </div>
+
+        {% if task.deadline %}
+        <p class="task-deadline-chip deadline-{{ task.deadline_state }}" title="Délai: {{ task.deadline|date:'j F Y H:i' }}">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-timer"></use></svg>
+          {{ task.deadline_remaining_label }}
+        </p>
+        {% endif %}
+
+        {% if project.status == "ACTIVE" and user.is_admin_role or project.status == "ACTIVE" and task|is_task_assignee:user and not task.is_locked_for_members %}
+        <form method="post" action="{% url 'tasks:update_status' task.pk %}" class="status-form kanban-status-data" aria-hidden="true">
+          {% csrf_token %}
+          <select name="status" class="status-select" tabindex="-1">
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="status-submit" tabindex="-1">Mettre à jour</button>
+        </form>
+        {% endif %}
+
+        {% if task|is_task_assignee:user and not user.is_admin_role and task.is_locked_for_members %}
+        <p class="lock-note">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-lock"></use></svg>
+          {% if task.status == "TO_VERIFY" %}En attente de vérification par un administrateur{% else %}Terminée et verrouillée{% endif %}
+        </p>
+        {% endif %}
+      </article>
+      {% empty %}
+      <p class="empty-column">Aucune tâche ici.</p>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/date-range-picker.js' %}"></script>
+<script src="{% static 'js/board.js' %}?v=20260711-confirmation-page"></script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion documentaire</p>
+    <h1>{{ page_title }}</h1>
+  </div>
+  {% if perms.documents.add_document and mode != "attachments" and mode != "archives" or request.user.is_admin_role and mode != "attachments" and mode != "archives" %}
+  <a href="{% url 'documents:create' %}" class="btn btn-primary">+ Nouveau document</a>
+  {% endif %}
+</header>
+
+<form method="get" class="panel document-filter-grid">
+  {{ filter_form.query }}
+  {{ filter_form.source }}
+  {{ filter_form.category }}
+  {{ filter_form.file_type }}
+  {{ filter_form.service }}
+  {{ filter_form.uploaded_by }}
+  {{ filter_form.status }}
+  <button type="submit" class="btn btn-primary">Filtrer</button>
+</form>
+
+<div class="panel document-table-panel">
+  <div class="document-table-wrap">
+    <table class="data-table document-table">
+      <thead>
+        <tr>
+          <th>Nom du document</th>
+          <th>Catégorie</th>
+          <th>Type</th>
+          <th>Source</th>
+          <th>Élément lié</th>
+          <th>Service</th>
+          <th>Ajouté par</th>
+          <th>Date d’ajout</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for document in documents %}
+        <tr>
+          <td>
+            <strong>{{ document.title }}</strong>
+            <small>{{ document.file_size_display }}</small>
+          </td>
+          <td>{{ document.get_category_display }}</td>
+          <td><span class="document-type-badge">{{ document.file_type }}</span></td>
+          <td>{{ document.get_source_module_display }}</td>
+          <td>{{ document.linked_item_label|default:"-" }}</td>
+          <td>{{ document.service|default:"-" }}</td>
+          <td>{{ document.uploaded_by.name|default:"Système" }}</td>
+          <td>{{ document.created_at|date:"d/m/Y" }}</td>
+          <td><span class="access-badge document-status-{{ document.status|lower }}">{{ document.get_status_display }}</span></td>
+          <td class="document-actions">
+            <div class="document-action-grid">
+              <a href="{% url 'documents:detail' document.pk %}" class="access-action access-action-primary">Ouvrir</a>
+              <a href="{% url 'documents:download' document.pk %}" class="access-action access-action-secondary">Télécharger</a>
+              {% if request.user.is_admin_role or perms.documents.change_document %}
+              <a href="{% url 'documents:update' document.pk %}" class="access-action access-action-secondary">Modifier</a>
+              <form method="post" action="{% url 'documents:archive' document.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="access-action access-action-danger">{% if document.is_archived %}Restaurer{% else %}Archiver{% endif %}</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="empty-row">Aucun document trouvé.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

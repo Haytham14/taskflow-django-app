@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chat équipe · TaskFlow{% endblock %}
+
+{% block content %}
+<section
+  class="work-chat-page work-chat-simple"
+  data-api-base="/api/chat/"
+  data-current-user-id="{{ current_user_id }}"
+  data-current-is-admin="{{ current_is_admin|yesno:'true,false' }}"
+  data-current-author="{{ current_author }}"
+  data-current-initials="{{ current_initials }}"
+>
+  {% csrf_token %}
+  {{ chat_users|json_script:"work-chat-users-data" }}
+
+  <header class="page-header work-chat-page-header">
+    <div>
+      <p class="eyebrow">Gestion du travail</p>
+      <h1>Chat équipe</h1>
+    </div>
+    <button type="button" class="btn btn-primary work-chat-new-channel" id="work-chat-new-discussion">
+      + Nouvelle discussion
+    </button>
+  </header>
+
+  <div class="work-chat-layout">
+    <aside class="work-chat-card work-chat-conversations" aria-label="Conversations">
+      <h2>Conversations</h2>
+
+      <nav class="work-chat-conversation-list" id="work-chat-conversation-list" aria-label="Liste des conversations">
+        <p class="work-chat-state">Chargement des conversations...</p>
+      </nav>
+    </aside>
+
+    <main class="work-chat-card work-chat-panel">
+      <header class="work-chat-panel-head">
+        <div class="work-chat-title-block no-avatar">
+          <span class="work-chat-conversation-avatar headset large" id="work-chat-channel-avatar" aria-hidden="true" hidden></span>
+          <div>
+            <h2 id="work-chat-channel-title">Sélectionnez une conversation</h2>
+            <p id="work-chat-channel-meta">Aucun canal actif</p>
+          </div>
+        </div>
+        <div class="work-chat-panel-tools">
+          <button type="button" id="work-chat-message-search-toggle" aria-label="Rechercher dans les messages" title="Rechercher"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-search"></use></svg></button>
+          <button type="button" id="work-chat-options-toggle" aria-label="Options"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-dots"></use></svg></button>
+          <div class="work-chat-menu" id="work-chat-options-menu" hidden>
+            <button type="button" data-action="refresh">Actualiser</button>
+            <button type="button" data-action="mark-read">Marquer comme lu</button>
+            <button type="button" data-action="members">Voir les membres</button>
+            <button type="button" data-action="edit">Modifier le canal</button>
+            <button type="button" data-action="delete" class="danger-link">Supprimer le canal</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="work-chat-message-search" id="work-chat-message-search" hidden>
+        <input type="search" id="work-chat-message-search-input" placeholder="Rechercher dans cette discussion..." aria-label="Rechercher dans cette discussion">
+        <button type="button" id="work-chat-message-search-close" aria-label="Fermer la recherche">&times;</button>
+      </div>
+
+      <section class="work-chat-thread" id="work-chat-thread" aria-live="polite">
+        <p class="work-chat-empty">Choisissez une conversation pour afficher les messages.</p>
+      </section>
+
+      <form class="work-chat-composer" id="work-chat-composer">
+        <button type="button" class="work-chat-attach-btn" id="work-chat-attach-btn" aria-label="Joindre un fichier">
+          <svg viewBox="0 0 20 24" aria-hidden="true">
+            <path d="M15.5 7v9.5a5.5 5.5 0 0 1-11 0V6.25a3.75 3.75 0 0 1 7.5 0V16.5a2 2 0 0 1-4 0V7"/>
+          </svg>
+        </button>
+        <input type="file" id="work-chat-file-input" hidden>
+        <textarea id="work-chat-input" placeholder="Écrire un message..." rows="1" aria-label="Écrire un message" disabled></textarea>
+        <button type="submit" class="work-chat-send" id="work-chat-send" disabled>Envoyer <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-send"></use></svg></button>
+        <div class="work-chat-file-chip" id="work-chat-file-chip" hidden>
+          <span id="work-chat-file-name"></span>
+          <button type="button" id="work-chat-file-clear" aria-label="Retirer le fichier">×</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <div class="work-chat-modal-backdrop" id="work-chat-modal-backdrop" hidden></div>
+
+  <section class="work-chat-modal" id="work-chat-new-modal" aria-modal="true" role="dialog" aria-labelledby="work-chat-new-title" hidden>
+    <form id="work-chat-new-form">
+      <header>
+        <h2 id="work-chat-new-title">Nouvelle discussion</h2>
+        <button type="button" id="work-chat-new-close" aria-label="Fermer">×</button>
+      </header>
+
+      <div class="work-chat-mode-tabs" role="tablist" aria-label="Type de discussion">
+        <button type="button" class="active" data-mode="channel">Canal</button>
+        <button type="button" data-mode="direct">Message direct</button>
+      </div>
+
+      <input type="hidden" name="channel_type" value="team">
+
+      <label class="work-chat-field work-chat-channel-only">
+        <span>Nom</span>
+        <input type="text" name="name" placeholder="Exemple : Support IT" required>
+      </label>
+
+      <label class="work-chat-field work-chat-channel-only">
+        <span>Description</span>
+        <textarea name="description" rows="3" placeholder="Sujet de la discussion"></textarea>
+      </label>
+
+      <fieldset class="work-chat-member-picker work-chat-channel-only">
+        <legend>Membres</legend>
+        <div id="work-chat-member-options">
+          <p class="work-chat-state">Aucun autre utilisateur disponible.</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="work-chat-member-picker work-chat-direct-only" hidden>
+        <legend>Choisir un utilisateur</legend>
+        <div id="work-chat-direct-options">
+          <p class="work-chat-state">Aucun autre utilisateur disponible.</p>
+        </div>
+      </fieldset>
+
+      <footer>
+        <button type="button" class="btn btn-secondary" id="work-chat-new-cancel">Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer</button>
+      </footer>
+    </form>
+  </section>
+
+  <section class="work-chat-modal" id="work-chat-members-modal" aria-modal="true" role="dialog" aria-labelledby="work-chat-members-title" hidden>
+    <header>
+      <h2 id="work-chat-members-title">Membres de la discussion</h2>
+      <button type="button" id="work-chat-members-close" aria-label="Fermer">×</button>
+    </header>
+    <div class="work-chat-members-list" id="work-chat-members-list"></div>
+  </section>
+
+  <section class="work-chat-modal" id="work-chat-edit-modal" aria-modal="true" role="dialog" aria-labelledby="work-chat-edit-title" hidden>
+    <form id="work-chat-edit-form">
+      <header>
+        <h2 id="work-chat-edit-title">Modifier le canal</h2>
+        <button type="button" id="work-chat-edit-close" aria-label="Fermer">×</button>
+      </header>
+
+      <label class="work-chat-field">
+        <span>Nom</span>
+        <input type="text" name="name" id="work-chat-edit-name" required>
+      </label>
+
+      <label class="work-chat-field">
+        <span>Description</span>
+        <textarea name="description" id="work-chat-edit-description" rows="3"></textarea>
+      </label>
+
+      <fieldset class="work-chat-member-picker">
+        <legend>Membres du canal</legend>
+        <div id="work-chat-edit-members">
+          <p class="work-chat-state">Chargement...</p>
+        </div>
+      </fieldset>
+
+      <footer>
+        <button type="button" class="btn btn-danger" id="work-chat-edit-delete">Supprimer</button>
+        <button type="button" class="btn btn-secondary" id="work-chat-edit-cancel">Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </footer>
+    </form>
+  </section>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/work-chat.js' %}?v=20260712-no-conversation-search"></script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ access_request.reference }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><a href="{% url 'access_control:request_list' %}">&larr; Demandes d'habilitation</a></p>
+    <h1>{{ access_request.reference }}</h1>
+  </div>
+  <div class="header-actions">
+    {% if request.user.is_admin_role or access_request.status == "DRAFT" or access_request.status == "INFO_REQUESTED" %}
+    <a href="{% url 'access_control:request_update' access_request.pk %}" class="btn btn-ghost">Modifier</a>
+    {% endif %}
+    {% if request.user.is_admin_role %}
+    <a href="{% url 'access_control:request_delete' access_request.pk %}" class="btn btn-danger">Supprimer</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="access-detail-grid">
+  <section class="panel">
+    <h2>Informations générales</h2>
+    <dl class="access-definition-list">
+      <dt>Référence</dt><dd>{{ access_request.reference }}</dd>
+      <dt>Demandeur</dt><dd>{{ access_request.requester.name|default:"-" }}</dd>
+      <dt>Département</dt><dd>{{ access_request.department }}</dd>
+      <dt>Manager</dt><dd>{{ access_request.manager_name }}</dd>
+      <dt>Application</dt><dd>{{ access_request.habilitation.application }}</dd>
+      <dt>Habilitations</dt>
+      <dd>
+        <ul class="catalog-habilitation-list">
+          {% for item in access_request.requested_habilitations.all %}<li>{{ item.name }}</li>{% endfor %}
+        </ul>
+      </dd>
+      <dt>Type</dt><dd>{{ access_request.get_access_type_display }}</dd>
+      <dt>Urgence</dt><dd><span class="access-badge criticality-{{ access_request.urgency|lower }}">{{ access_request.get_urgency_display }}</span></dd>
+      <dt>Date début</dt><dd>{{ access_request.requested_start_date|date:"j F Y" }}</dd>
+      <dt>Date fin</dt><dd>{{ access_request.requested_end_date|date:"j F Y"|default:"Aucune date de fin" }}</dd>
+      <dt>Duree</dt><dd>{% if access_request.requested_duration_days or access_request.requested_duration_days == 0 %}{{ access_request.requested_duration_days }} jours{% else %}Aucune duree{% endif %}</dd>
+      <dt>Statut</dt><dd><span class="access-badge access-status-{{ access_request.status|lower }}">{{ access_request.get_status_display }}</span></dd>
+    </dl>
+    <h3>Justification</h3>
+    <p>{{ access_request.justification|linebreaksbr }}</p>
+  </section>
+
+  <section class="panel">
+    <h2>Actions</h2>
+    <form method="post" class="workflow-action-form">
+      {% csrf_token %}
+      <label for="id_comment">Commentaire</label>
+      <textarea name="comment" id="id_comment" rows="3" class="input" placeholder="Commentaire, motif ou information"></textarea>
+      <div class="workflow-buttons">
+        <button name="action" value="approve" class="btn btn-success">Approuver</button>
+        <button name="action" value="reject" class="btn btn-danger">Refuser</button>
+        <button name="action" value="request_info" class="btn btn-warning">Demander information</button>
+        <button name="action" value="grant" class="btn btn-primary">Attribuer l'accès</button>
+        <button name="action" value="renew" class="btn btn-ghost">Renouveler</button>
+        <button name="action" value="revoke" class="btn btn-danger">Révoquer</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Workflow</h2>
+  <ol class="workflow-timeline">
+    {% for step in steps %}
+    <li class="workflow-step workflow-step-{{ step.status|lower }}">
+      <strong>{{ step.step_name }}</strong>
+      <span>{{ step.assigned_to.name|default:"Non assigné" }}</span>
+      <span class="access-badge step-status-{{ step.status|lower }}">{{ step.get_status_display }}</span>
+      {% if step.comment %}<p>{{ step.comment }}</p>{% endif %}
+      {% if step.validated_at %}<small>{{ step.validated_at|date:"j F Y H:i" }}</small>{% endif %}
+    </li>
+    {% empty %}
+    <li>Aucune étape initialisée.</li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="panel">
+  <h2>Historique</h2>
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Nouvelle valeur</th></tr></thead>
+    <tbody>
+      {% for log in audit_logs %}
+      <tr>
+        <td>{{ log.created_at|date:"j F Y H:i" }}</td>
+        <td>{{ log.user.name|default:"Système" }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.new_value|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="empty-row">Aucun événement.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

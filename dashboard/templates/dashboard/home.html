@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+{% block main_class %}task-dashboard-main{% endblock %}
+{% block title %}Tableau de bord · TaskFlow{% endblock %}
+
+{% block content %}
+<header class="dashboard-welcome-header">
+  <div>
+    <p class="eyebrow">Gestion des tâches</p>
+    <h1>Bonjour, <span>{{ user.name|default:"Utilisateur" }}</span></h1>
+    <p>Voici l'activité de votre équipe pour la période sélectionnée.</p>
+  </div>
+  <div class="dashboard-header-actions">
+    <a href="{% url 'tasks:calendar' %}" class="btn btn-ghost">
+      <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-calendar"></use></svg>
+      Calendrier
+    </a>
+    <a href="{% url 'tasks:board' %}" class="btn btn-ghost">
+      <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-tasks"></use></svg>
+      Kanban
+    </a>
+    {% if user.is_admin_role or perms.tasks.add_task %}
+    <a href="{% url 'tasks:task_create' %}" class="btn btn-primary">
+      <span aria-hidden="true">+</span>
+      Nouvelle tâche
+    </a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="dashboard-period-shell">
+  {% include "partials/date_filter.html" %}
+</div>
+
+<section class="dashboard-command-panel">
+  <div class="dashboard-command-summary">
+    <p class="dashboard-command-label">Total des tâches</p>
+    <div class="dashboard-total-line">
+      <strong>{{ total_tasks }}</strong>
+      <span>+ {{ completion_rate }}% terminées</span>
+    </div>
+    <p class="dashboard-command-caption">{{ range_start|date:"j F Y" }} — {{ range_end|date:"j F Y" }}</p>
+
+    <div class="dashboard-project-summary">
+      <div>
+        <span>Projets actifs</span>
+        <strong>{{ active_project_count }}</strong>
+      </div>
+      <div>
+        <span>Projets terminés</span>
+        <strong>{{ completed_project_count }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-status-flow" aria-label="Progression des statuts">
+    <div class="dashboard-status-flow-heading">
+      <div>
+        <p class="eyebrow">Progression</p>
+        <h2>Avancement des tâches</h2>
+      </div>
+      <span>{{ completion_rate }}% réalisé</span>
+    </div>
+    <div class="dashboard-status-bars">
+      {% for item in status_overview %}
+      <div class="dashboard-status-bar status-{{ item.key }}">
+        <div><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+        <span class="dashboard-progress-track"><i style="width: {{ item.percent }}%"></i></span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="dashboard-analytics-triptych">
+  <section class="panel dashboard-analytic-panel">
+    <div class="dashboard-panel-heading">
+      <div>
+        <p class="eyebrow">Analyse</p>
+        <h2>Répartition par statut</h2>
+      </div>
+      <span class="dashboard-panel-count">{{ total_tasks }} tâches</span>
+    </div>
+    <canvas id="statusChart" height="190" role="img" aria-label="Diagramme des tâches par statut"></canvas>
+  </section>
+
+  <section class="panel dashboard-analytic-panel">
+    <div class="dashboard-panel-heading">
+      <div>
+        <p class="eyebrow">Priorités</p>
+        <h2>Niveau d'urgence</h2>
+      </div>
+      <span class="dashboard-panel-count">{{ period_project_count }} projets</span>
+    </div>
+    <canvas id="priorityChart" height="190" role="img" aria-label="Diagramme des tâches par priorité"></canvas>
+  </section>
+
+  <section class="panel dashboard-attention-panel dashboard-analytic-panel">
+    <div class="dashboard-panel-heading">
+      <div>
+        <p class="eyebrow">Échéances</p>
+        <h2>Tâches à surveiller</h2>
+      </div>
+      <a href="{% url 'tasks:calendar' %}" class="dashboard-panel-icon-link" title="Voir le calendrier" aria-label="Voir le calendrier">
+        <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-chevron-right"></use></svg>
+      </a>
+    </div>
+    <div class="dashboard-row-list dashboard-attention-list">
+      {% for task in attention_tasks %}
+      <a href="{% url 'tasks:task_detail' task.pk %}" class="dashboard-task-row">
+        <div class="dashboard-task-main">
+          <strong>{{ task.title }}</strong>
+          <span>{{ task.project.name|default:"Sans projet" }}</span>
+        </div>
+        <span class="task-deadline-chip deadline-{{ task.deadline_state }}">{{ task.deadline_remaining_label }}</span>
+      </a>
+      {% empty %}
+      <div class="dashboard-empty-state compact">
+        <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-clock"></use></svg>
+        <p>Aucune échéance à surveiller.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+
+<section class="dashboard-secondary-grid {% if not user.is_admin_role %}single{% endif %}">
+  {% if user.is_admin_role %}
+  <section class="panel dashboard-workload-panel">
+    <div class="dashboard-panel-heading">
+      <div>
+        <p class="eyebrow">Équipe</p>
+        <h2>Charge de travail</h2>
+      </div>
+      <span class="dashboard-panel-count">{{ total_users }} utilisateurs</span>
+    </div>
+    <div class="dashboard-workload-list">
+      {% for member in team_workload %}
+      <div class="dashboard-workload-row">
+        <span class="table-user">
+          <span class="avatar">{{ member.name|default:"?"|first|upper }}</span>
+          <span><strong>{{ member.name }}</strong><small>{{ member.get_role_display }}</small></span>
+        </span>
+        <span class="dashboard-workload-count"><strong>{{ member.open_task_count }}</strong><small>ouverte{{ member.open_task_count|pluralize }}</small></span>
+        {% if member.overdue_task_count %}<span class="dashboard-overdue-count">{{ member.overdue_task_count }} en retard</span>{% endif %}
+      </div>
+      {% empty %}<p class="empty-row">Aucun utilisateur actif.</p>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="panel dashboard-recent-tasks">
+    <div class="dashboard-panel-heading">
+      <div>
+        <p class="eyebrow">Activité</p>
+        <h2>Tâches récentes</h2>
+      </div>
+      <a href="{% url 'tasks:board' %}" class="dashboard-panel-link">Voir toutes les tâches</a>
+    </div>
+    <div class="dashboard-recent-list">
+      {% for task in recent_tasks %}
+      <article class="dashboard-recent-row">
+        <a href="{% url 'tasks:task_detail' task.pk %}" class="dashboard-recent-title">
+          <strong>{{ task.title }}</strong>
+          <span>{{ task.project.name|default:"Sans projet" }}</span>
+        </a>
+        <div class="dashboard-recent-badges">
+          <span class="badge badge-status-{{ task.status|lower }}">{{ task.get_status_display }}</span>
+          <span class="badge badge-priority-{{ task.priority|lower }}">{{ task.get_priority_display }}</span>
+        </div>
+        <div class="dashboard-avatar-stack" aria-label="Utilisateurs assignés">
+          {% for assignee in task.assignees.all %}
+          <span class="avatar" title="{{ assignee.name }}">{{ assignee.name|default:"?"|first|upper }}</span>
+          {% empty %}<span class="dashboard-unassigned">Non assignée</span>{% endfor %}
+        </div>
+        <div class="dashboard-recent-activity">
+          {% if task.comment_count %}<span title="Commentaires"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-chat"></use></svg>{{ task.comment_count }}</span>{% endif %}
+          {% if task.attachment_count %}<span title="Pièces jointes"><svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-paperclip"></use></svg>{{ task.attachment_count }}</span>{% endif %}
+        </div>
+        <div class="dashboard-task-dates">
+          <span>Créée le {{ task.created_at|date:"j F Y" }}</span>
+          {% if task.verification_at %}<span>Mise à vérifier le {{ task.verification_at|date:"j F Y" }}</span>{% endif %}
+          {% if task.completed_at %}<span>Terminée le {{ task.completed_at|date:"j F Y" }}</span>{% endif %}
+          {% if task.deadline %}<span class="deadline-{{ task.deadline_state }}">{{ task.deadline_remaining_label }}</span>{% endif %}
+        </div>
+      </article>
+      {% empty %}
+      <div class="dashboard-empty-state"><p>Aucune tâche pour cette période.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+
+{{ status_labels|json_script:"status-labels" }}
+{{ status_data|json_script:"status-data" }}
+{{ priority_labels|json_script:"priority-labels" }}
+{{ priority_data|json_script:"priority-data" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/date-range-picker.js' %}"></script>
+<script src="{% static 'js/dashboard.js' %}?v=20260713-dashboard-reference-design"></script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Confirmer le déplacement · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Tableau des tâches</p>
+    <h1>Confirmer le déplacement</h1>
+  </div>
+</header>
+
+<div class="panel form-panel confirm-panel">
+  <p>
+    Déplacer <strong>{{ task.title }}</strong> vers
+    <span class="badge badge-status-{{ new_status|lower }}">{{ new_status_label }}</span> ?
+  </p>
+  <p class="muted">{{ explanation }}</p>
+
+  <form method="post" action="{% url 'tasks:update_status' task.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="status" value="{{ new_status }}">
+    <input type="hidden" name="next" value="{{ next_url }}">
+    <div class="form-actions">
+      <a href="{{ next_url }}" class="btn btn-ghost">Annuler</a>
+      <button type="submit" class="btn btn-primary">Confirmer le déplacement</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

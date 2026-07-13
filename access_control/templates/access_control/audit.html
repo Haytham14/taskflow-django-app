@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Historique / Audit · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Historique / Audit</h1>
+  </div>
+</header>
+
+<div class="panel access-filter-bar audit-filter-bar">
+  <form method="get" class="audit-filter-form">
+    <select name="user" class="select">
+      <option value="">Tous les utilisateurs</option>
+      {% for item in users %}<option value="{{ item.pk }}" {% if request.GET.user == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
+    </select>
+    <input name="action" value="{{ request.GET.action }}" class="input" placeholder="Action">
+    <input name="module" value="{{ request.GET.module }}" class="input" placeholder="Module">
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+  </form>
+  {% if request.user.is_admin_role %}
+  <form method="post" action="{% url 'access_control:audit_clear' %}" class="audit-clear-form" onsubmit="return confirm('Vider définitivement tout l’historique ?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Vider l'historique</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Utilisateur</th>
+        <th>Action</th>
+        <th>Module</th>
+        <th>Element</th>
+        <th>Ancienne valeur</th>
+        <th>Nouvelle valeur</th>
+        <th>Adresse IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.created_at|date:"j F Y H:i" }}</td>
+        <td>{{ log.user.name|default:"Systeme" }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.entity_type }}</td>
+        <td>{{ log.entity_id }}</td>
+        <td>{{ log.old_value|default:"-" }}</td>
+        <td>{{ log.new_value|default:"-" }}</td>
+        <td>{{ log.ip_address|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="empty-row">Aucun evenement.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

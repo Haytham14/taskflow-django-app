@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Historique documentaire · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion documentaire</p>
+    <h1>Historique documentaire</h1>
+  </div>
+</header>
+
+<div class="panel document-table-panel">
+  <div class="document-table-wrap">
+    <table class="data-table document-history-table">
+      <thead>
+        <tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Document</th><th>Source</th><th>Détails</th></tr>
+      </thead>
+      <tbody>
+        {% for entry in history_entries %}
+        <tr>
+          <td>{{ entry.created_at|date:"d/m/Y H:i" }}</td>
+          <td>{{ entry.user.name|default:"Système" }}</td>
+          <td>{{ entry.get_action_display }}</td>
+          <td>{% if entry.document %}<a href="{% url 'documents:detail' entry.document.pk %}">{{ entry.document_title }}</a>{% else %}{{ entry.document_title }}{% endif %}</td>
+          <td>{{ entry.get_source_module_display }}</td>
+          <td>{{ entry.details|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty-row">Aucun événement documentaire.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

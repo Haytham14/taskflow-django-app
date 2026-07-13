@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ habilitation.application }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><a href="{% url 'access_control:catalog' %}">&larr; Catalogue</a></p>
+    <h1>{{ habilitation.application }}</h1>
+  </div>
+  <div class="header-actions">
+    {% if request.user.is_admin_role %}
+    <a href="{% url 'access_control:catalog_update' habilitation.pk %}" class="btn btn-ghost">Modifier</a>
+    <a href="{% url 'access_control:catalog_delete' habilitation.pk %}" class="btn btn-danger">Supprimer</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="panel">
+  <dl class="access-definition-list">
+    <dt>Application</dt><dd>{{ habilitation.application }}</dd>
+    <dt>Habilitations</dt>
+    <dd>
+      <ul class="catalog-habilitation-list catalog-habilitation-list-detail">
+        {% for item in habilitation.items.all %}<li>{{ item.name }}</li>{% endfor %}
+      </ul>
+    </dd>
+    <dt>Types d'accès disponibles</dt>
+    <dd>
+      <ul class="catalog-habilitation-list catalog-habilitation-list-detail">
+        {% for access_type in habilitation.access_types.all %}<li>{{ access_type.name }}</li>{% endfor %}
+      </ul>
+    </dd>
+    <dt>Responsable</dt><dd>{{ habilitation.responsible.name|default:"-" }}</dd>
+    <dt>Statut</dt><dd>{{ habilitation.get_status_display }}</dd>
+  </dl>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if form.instance.pk %}Modifier le rôle{% else %}Nouveau rôle{% endif %} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des utilisateurs</p>
+    <h1>{% if form.instance.pk %}Modifier le rôle{% else %}Créer un rôle{% endif %}</h1>
+    <p class="muted">Choisissez toutes les actions que les utilisateurs de ce rôle pourront effectuer.</p>
+  </div>
+</header>
+
+<form method="post" novalidate class="role-editor">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="message message-error">{{ form.non_field_errors }}</div>{% endif %}
+  <section class="panel role-editor-identity">
+    <div class="field">
+      <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+      {{ form.name }}
+      {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="field">
+      <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+      {{ form.description }}
+      {% for error in form.description.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="role-permissions-section">
+    <div class="role-permissions-heading">
+      <div><h2>Permissions détaillées</h2><p class="muted">Les permissions sont regroupées par module de l’application.</p></div>
+      <div class="role-global-actions">
+        <button type="button" class="btn btn-ghost" data-permissions-all="on">Tout sélectionner</button>
+        <button type="button" class="btn btn-ghost" data-permissions-all="off">Tout retirer</button>
+      </div>
+    </div>
+    {% for group in permission_groups %}
+    <article class="panel permission-module" data-permission-module="{{ group.key }}">
+      <header>
+        <div><h3>{{ group.label }}</h3><span>{{ group.permissions|length }} permissions disponibles</span></div>
+        <button type="button" class="permission-module-toggle">Tout sélectionner</button>
+      </header>
+      <div class="permission-option-grid">
+        {% for permission in group.permissions %}
+        <label class="permission-option">
+          <input type="checkbox" name="permissions" value="{{ permission.id }}" {% if permission.selected %}checked{% endif %}>
+          <span class="permission-check" aria-hidden="true"></span>
+          <span class="permission-copy">
+            <strong>{{ permission.action }} · {{ permission.model }}</strong>
+            <small>{{ permission.detail }}</small>
+            <code>{{ permission.code }}</code>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+    {% for error in form.permissions.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  </section>
+
+  <div class="role-editor-actions">
+    <div>
+      <a href="{% url 'user_roles' %}" class="btn btn-ghost">Annuler</a>
+      {% if form.instance.pk %}<a href="{% url 'role_delete' form.instance.pk %}" class="btn btn-danger">Supprimer</a>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">Enregistrer le rôle</button>
+  </div>
+</form>
+{% endblock %}
+{% block extra_scripts %}<script src="{% static 'js/role-form.js' %}?v=20260712"></script>{% endblock %}

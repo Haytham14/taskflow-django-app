@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Supprimer {{ delete_kind }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Supprimer {{ delete_kind }}</h1>
+  </div>
+</header>
+
+<section class="panel confirm-panel">
+  <p>Confirmer la suppression de <strong>{{ delete_label }}</strong>.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a href="{{ cancel_url }}" class="btn btn-ghost">Annuler</a>
+      <button type="submit" class="btn btn-danger">Supprimer</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

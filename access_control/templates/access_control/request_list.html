@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Demandes d'habilitation · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Demandes d'habilitation</h1>
+  </div>
+  <a href="{% url 'access_control:request_create' %}" class="btn btn-primary">+ Nouvelle demande</a>
+</header>
+
+<form method="get" class="panel access-filter-bar">
+  <input type="search" name="q" value="{{ request.GET.q }}" class="input request-search-input" placeholder="Rechercher...">
+  <select name="status" class="select">
+    <option value="">Tous les statuts</option>
+    {% for value, label in status_choices %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="type" class="select">
+    <option value="">Tous les types</option>
+    {% for value, label in type_choices %}<option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="urgency" class="select">
+    <option value="">Toutes les urgences</option>
+    {% for value, label in urgency_choices %}<option value="{{ value }}" {% if request.GET.urgency == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="requester" class="select">
+    <option value="">Tous les demandeurs</option>
+    {% for item in requesters %}<option value="{{ item.pk }}" {% if request.GET.requester == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary request-filter-submit">Filtrer</button>
+</form>
+
+<section class="request-list" aria-label="Liste des demandes d'habilitation">
+  {% for request_item in requests_list %}
+  <article class="request-list-item">
+    <div class="request-main">
+      <strong>{{ request_item.reference }}</strong>
+      <span>{{ request_item.requester.name|default:"-" }}</span>
+    </div>
+
+    <div class="request-subject">
+      <h2>{{ request_item.habilitation.application }}</h2>
+      <p>{{ request_item.get_access_type_display }} · {{ request_item.current_step }}</p>
+    </div>
+
+    <div class="request-badges">
+      <span class="access-badge criticality-{{ request_item.urgency|lower }}">{{ request_item.get_urgency_display }}</span>
+      <span class="access-badge access-status-{{ request_item.status|lower }}">{{ request_item.get_status_display }}</span>
+    </div>
+
+    <div class="request-date">
+      <span>Date</span>
+      <strong>{{ request_item.created_at|date:"d/m/Y" }}</strong>
+    </div>
+
+    <div class="request-actions">
+      <a href="{% url 'access_control:request_detail' request_item.pk %}" class="access-action access-action-primary">Ouvrir</a>
+      {% if request.user.is_admin_role or request_item.requester_id == request.user.id and request_item.status == "DRAFT" or request_item.requester_id == request.user.id and request_item.status == "INFO_REQUESTED" %}
+      <a href="{% url 'access_control:request_update' request_item.pk %}" class="access-action access-action-secondary">Modifier</a>
+      {% endif %}
+    </div>
+  </article>
+  {% empty %}
+  <div class="panel">
+    <p class="empty-row">Aucune demande trouvée.</p>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Rôles · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des utilisateurs</p>
+    <h1>Rôles</h1>
+  </div>
+  <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">+ Nouvel utilisateur</a>
+</header>
+
+<section class="stat-grid user-admin-stats">
+  <article class="stat-card"><span>Rôles configurés</span><strong>{{ total_roles }}</strong></article>
+  <article class="stat-card"><span>Rôles utilisés</span><strong>{{ assigned_roles }}</strong></article>
+  <article class="stat-card"><span>Utilisateurs</span><strong>{{ total_users }}</strong></article>
+</section>
+
+<div class="panel">
+  <div class="panel-title-row">
+    <h2>Référentiel des rôles</h2>
+    <a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">Gérer les utilisateurs</a>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Rôle</th>
+        <th>Module principal</th>
+        <th>Utilisateurs</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for role in roles %}
+      <tr>
+        <td><span class="access-badge role-pill">{{ role.label }}</span></td>
+        <td>{{ role.module }}</td>
+        <td><strong>{{ role.count }}</strong></td>
+        <td>{{ role.description }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

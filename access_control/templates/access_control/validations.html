@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Validations · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Validations</h1>
+  </div>
+</header>
+
+<div class="panel">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Référence</th>
+        <th>Demandeur</th>
+        <th>Habilitation</th>
+        <th>Étape</th>
+        <th>Urgence</th>
+        <th>Date demande</th>
+        <th>Délai</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for step in steps %}
+      <tr>
+        <td><strong>{{ step.request.reference }}</strong></td>
+        <td>{{ step.request.requester.name|default:"-" }}</td>
+        <td>{{ step.request.habilitation.application }}</td>
+        <td>{{ step.step_name }}</td>
+        <td><span class="access-badge criticality-{{ step.request.urgency|lower }}">{{ step.request.get_urgency_display }}</span></td>
+        <td>{{ step.request.created_at|date:"j F Y" }}</td>
+        <td>{% if step.request.requested_end_date %}{{ step.request.requested_end_date|timeuntil }}{% else %}Aucun delai{% endif %}</td>
+        <td class="table-actions">
+          <a href="{% url 'access_control:request_detail' step.request.pk %}" class="access-action access-action-primary">Ouvrir</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="empty-row">Aucune validation en attente.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

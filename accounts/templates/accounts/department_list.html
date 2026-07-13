@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Services / Départements · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div><p class="eyebrow">Gestion des utilisateurs</p><h1>Services / Départements</h1><p class="muted">Structurez les équipes et désignez un responsable pour chaque service.</p></div>
+  {% if user.is_admin_role or perms.accounts.add_department %}<a href="{% url 'department_create' %}" class="btn btn-primary">+ Nouveau service</a>{% endif %}
+</header>
+<section class="stat-grid user-admin-stats role-stat-grid">
+  <article class="stat-card"><span>Services référencés</span><strong>{{ total_departments }}</strong></article>
+  <article class="stat-card"><span>Services actifs</span><strong>{{ active_departments }}</strong></article>
+  <article class="stat-card"><span>Utilisateurs affectés</span><strong>{{ covered_users }}</strong></article>
+</section>
+<section class="panel">
+  <div class="panel-title-row"><h2>Organisation</h2><a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">Voir les utilisateurs</a></div>
+  <div class="department-management-grid">
+    {% for department in departments %}
+    <article class="department-management-card">
+      <div class="department-card-head"><span class="department-code">{{ department.code }}</span><span class="access-badge {% if department.is_active %}assignment-status-active{% endif %}">{% if department.is_active %}Actif{% else %}Inactif{% endif %}</span></div>
+      <h3>{{ department.name }}</h3><p>{{ department.description|default:"Aucun périmètre renseigné." }}</p>
+      <dl class="mini-definition-list"><dt>Responsable</dt><dd>{{ department.manager.name|default:"À assigner" }}</dd><dt>Utilisateurs</dt><dd>{{ department.member_count }}</dd></dl>
+      {% if user.is_admin_role or perms.accounts.change_department %}<a href="{% url 'department_update' department.pk %}" class="btn btn-ghost">Modifier</a>{% endif %}
+    </article>
+    {% empty %}<p class="empty-row">Aucun service configuré.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

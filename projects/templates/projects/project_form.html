@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if form.instance.pk %}Modifier le projet{% else %}Nouveau projet{% endif %} · TaskFlow{% endblock %}
+{% block content %}
+<section class="project-form-page">
+  <header class="project-form-header">
+    <p class="eyebrow">Projets</p>
+    <h1>{% if form.instance.pk %}Modifier le projet{% else %}Nouveau projet{% endif %}</h1>
+  </header>
+
+  <div class="project-form-card">
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="project-form-row">
+        <span class="project-form-icon" aria-hidden="true"><svg class="ui-icon"><use href="#nav-icon-briefcase"></use></svg></span>
+        <div class="project-form-field">
+          <label for="{{ form.name.id_for_label }}">Nom</label>
+          {{ form.name }}
+          {% for error in form.name.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="project-form-row">
+        <span class="project-form-icon" aria-hidden="true"><svg class="ui-icon"><use href="#nav-icon-document"></use></svg></span>
+        <div class="project-form-field">
+          <label for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }}
+          {% for error in form.description.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="project-form-row project-status-row">
+        <span class="project-form-icon" aria-hidden="true"><svg class="ui-icon"><use href="#nav-icon-clock"></use></svg></span>
+        <div class="project-form-field">
+          <label for="{{ form.status.id_for_label }}">Statut</label>
+          {{ form.status }}
+          {% if form.instance.pk and form.instance.completed_at %}
+          <p class="project-form-help">Terminé le {{ form.instance.completed_at|date:"j F Y à H:i" }}</p>
+          {% endif %}
+          {% for error in form.status.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="project-form-row project-members-row">
+        <span class="project-form-icon" aria-hidden="true"><svg class="ui-icon"><use href="#nav-icon-users"></use></svg></span>
+        <div class="project-form-field">
+          <label for="{{ form.members.id_for_label }}">Membres</label>
+          <p class="project-form-help">Ajoutez plusieurs membres en un clic</p>
+
+          <div class="project-member-picker">
+            <div class="project-members-native">
+              {{ form.members }}
+            </div>
+            <div class="member-search-box">
+              <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-search"></use></svg>
+              <input type="search" placeholder="Rechercher et ajouter des membres..." aria-label="Rechercher des membres">
+            </div>
+            <div class="selected-member-chips" aria-live="polite"></div>
+            <div class="member-option-list"></div>
+          </div>
+
+          {% for error in form.members.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="project-form-actions">
+        <div class="project-form-secondary-actions">
+          <a href="{% url 'projects:project_list' %}" class="project-form-cancel">Annuler</a>
+          {% if form.instance.pk %}
+          <a href="{% url 'projects:project_delete' form.instance.pk %}" class="btn btn-danger">Supprimer</a>
+          {% endif %}
+        </div>
+        <button type="submit" class="project-form-submit">
+          <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-save"></use></svg>
+          Enregistrer le projet
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/project-form.js' %}"></script>
+{% endblock %}

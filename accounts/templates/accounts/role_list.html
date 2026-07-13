@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Rôles et permissions · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des utilisateurs</p>
+    <h1>Rôles et permissions</h1>
+    <p class="muted">Définissez précisément ce que chaque rôle peut consulter, créer, modifier ou supprimer.</p>
+  </div>
+  <a href="{% url 'role_create' %}" class="btn btn-primary">+ Nouveau rôle</a>
+</header>
+
+<section class="stat-grid user-admin-stats role-stat-grid">
+  <article class="stat-card"><span>Rôles configurés</span><strong>{{ total_roles }}</strong></article>
+  <article class="stat-card"><span>Rôles attribués</span><strong>{{ assigned_roles }}</strong></article>
+  <article class="stat-card"><span>Permissions accordées</span><strong>{{ total_permissions }}</strong></article>
+</section>
+
+<section class="panel role-list-panel">
+  <div class="panel-title-row">
+    <h2>Référentiel des rôles</h2>
+    <a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">Attribuer aux utilisateurs</a>
+  </div>
+  <div class="role-card-list">
+    {% for role in roles %}
+    <article class="role-card-row">
+      <div class="role-card-main">
+        <div class="role-card-title">
+          <h3>{{ role.name }}</h3>
+          {% if role.is_system %}<span class="access-badge">Système</span>{% else %}<span class="access-badge role-custom-badge">Personnalisé</span>{% endif %}
+        </div>
+        <p>{{ role.description|default:"Aucune description." }}</p>
+      </div>
+      <div class="role-card-metric"><strong>{{ role.permission_count }}</strong><span>permissions</span></div>
+      <div class="role-card-metric"><strong>{{ role.user_count }}</strong><span>utilisateurs</span></div>
+      <a href="{% url 'role_update' role.pk %}" class="btn btn-ghost">Modifier</a>
+    </article>
+    {% empty %}
+    <p class="empty-row">Aucun rôle configuré.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Projets · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Espace projets</p>
+    <h1>Projets</h1>
+  </div>
+  {% if user.is_admin_role or perms.projects.add_project %}
+  <a href="{% url 'projects:project_create' %}" class="btn btn-primary">+ Nouveau projet</a>
+  {% endif %}
+</header>
+
+<div class="panel">
+  <table class="data-table">
+    <thead>
+      <tr><th>Projet</th><th>Membres</th><th>Tâches</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for project in projects %}
+      <tr>
+        <td>
+          <div class="project-list-title">
+            <a href="{% url 'projects:project_board' project.pk %}"><strong>{{ project.name }}</strong></a>
+            <span class="badge project-status-{{ project.status|lower }}">{{ project.get_status_display }}</span>
+          </div>
+          {% if project.description %}<p class="muted table-subtext">{{ project.description|truncatechars:90 }}</p>{% endif %}
+          {% if project.completed_at %}<p class="muted table-subtext">Terminé le {{ project.completed_at|date:"j F Y" }}</p>{% endif %}
+        </td>
+        <td>
+          <span class="member-stack">
+            {% for member in project.members.all|slice:":4" %}
+            <span class="avatar" title="{{ member.name }}">{{ member.name|default:"?"|first|upper }}</span>
+            {% empty %}
+            <span class="muted">Aucun membre</span>
+            {% endfor %}
+          </span>
+        </td>
+        <td>{{ project.task_count }}</td>
+        <td class="row-actions project-row-actions">
+          <a href="{% url 'projects:project_board' project.pk %}" class="project-action-btn project-action-open">
+            <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-eye"></use></svg>
+            Ouvrir
+          </a>
+          {% if user.is_admin_role or perms.projects.change_project or perms.projects.delete_project %}
+          {% if user.is_admin_role or perms.projects.change_project %}
+          <a href="{% url 'projects:project_update' project.pk %}" class="project-action-btn project-action-edit">
+            <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-edit"></use></svg>
+            Modifier
+          </a>
+          {% endif %}
+          {% if user.is_admin_role or perms.projects.delete_project %}
+          <a href="{% url 'projects:project_delete' project.pk %}" class="project-action-btn project-action-delete">
+            <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-trash"></use></svg>
+            Supprimer
+          </a>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="empty-row">Aucun projet pour l'instant.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

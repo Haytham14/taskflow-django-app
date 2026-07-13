@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Supprimer la demande · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><a href="{% url 'access_control:request_detail' access_request.pk %}">&larr; Retour a la demande</a></p>
+    <h1>Supprimer la demande</h1>
+  </div>
+</header>
+
+<section class="panel confirm-panel">
+  <p>Confirmer la suppression de la demande <strong>{{ access_request.reference }}</strong> pour <strong>{{ access_request.habilitation.application }}</strong>.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a href="{% url 'access_control:request_detail' access_request.pk %}" class="btn btn-ghost">Annuler</a>
+      <button type="submit" class="btn btn-danger">Supprimer la demande</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

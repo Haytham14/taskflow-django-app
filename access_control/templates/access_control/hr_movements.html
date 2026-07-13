@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Mouvements RH · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des habilitations</p>
+    <h1>Mouvements RH</h1>
+  </div>
+</header>
+
+<div class="access-detail-grid">
+  {% if request.user.is_admin_role %}
+  <section class="panel">
+    <h2>Nouveau mouvement</h2>
+    <form method="post" class="compact-form" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="panel">
+    <h2>Règles automatiques</h2>
+    <p class="muted">Départ : révocation des accès actifs. Mutation : revue des habilitations. Suspension : accès suspendus temporairement.</p>
+  </section>
+</div>
+
+<div class="panel">
+  <table class="data-table">
+    <thead><tr><th>Collaborateur</th><th>Type</th><th>Ancien poste</th><th>Nouveau poste</th><th>Département</th><th>Date effet</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+      {% for movement in movements %}
+      <tr>
+        <td>{{ movement.user.name }}</td>
+        <td>{{ movement.get_movement_type_display }}</td>
+        <td>{{ movement.old_position|default:"-" }}</td>
+        <td>{{ movement.new_position|default:"-" }}</td>
+        <td>{{ movement.new_department|default:movement.old_department|default:"-" }}</td>
+        <td>{{ movement.effective_date|date:"j F Y" }}</td>
+        <td><span class="access-badge assignment-status-{{ movement.status|lower }}">{{ movement.get_status_display }}</span></td>
+        <td class="table-actions">
+          {% if request.user.is_admin_role %}
+          <a href="{% url 'access_control:movement_update' movement.pk %}" class="access-action access-action-secondary">Modifier</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="empty-row">Aucun mouvement RH.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

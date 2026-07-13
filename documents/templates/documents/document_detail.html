@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ document.title }} · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow"><a href="{% url 'documents:all' %}">&larr; Tous les documents</a></p>
+    <h1>{{ document.title }}</h1>
+  </div>
+  <div class="header-actions">
+    <a href="{% url 'documents:open' document.pk %}" class="btn btn-primary">Ouvrir le fichier</a>
+    <a href="{% url 'documents:download' document.pk %}" class="btn btn-ghost">Télécharger</a>
+    {% if request.user.is_admin_role %}
+    <a href="{% url 'documents:update' document.pk %}" class="btn btn-ghost">Modifier</a>
+    {% endif %}
+  </div>
+</header>
+
+<div class="access-detail-grid">
+  <section class="panel">
+    <h2>Informations du document</h2>
+    <dl class="access-definition-list">
+      <dt>Nom du fichier</dt><dd>{{ document.original_filename }}</dd>
+      <dt>Catégorie</dt><dd>{{ document.get_category_display }}</dd>
+      <dt>Type</dt><dd>{{ document.file_type }}</dd>
+      <dt>Taille</dt><dd>{{ document.file_size_display }}</dd>
+      <dt>Service</dt><dd>{{ document.service|default:"-" }}</dd>
+      <dt>Ajouté par</dt><dd>{{ document.uploaded_by.name|default:"Système" }}</dd>
+      <dt>Date d’ajout</dt><dd>{{ document.created_at|date:"d/m/Y H:i" }}</dd>
+      <dt>Statut</dt><dd><span class="access-badge document-status-{{ document.status|lower }}">{{ document.get_status_display }}</span></dd>
+    </dl>
+  </section>
+
+  <aside class="panel">
+    <h2>Source</h2>
+    <dl class="access-definition-list">
+      <dt>Module</dt><dd>{{ document.get_source_module_display }}</dd>
+      <dt>Élément lié</dt><dd>{{ document.linked_item_label|default:"-" }}</dd>
+    </dl>
+    {% if document.source_url %}
+    <a href="{{ document.source_url }}" class="btn btn-ghost">Ouvrir la fiche source</a>
+    {% endif %}
+    {% if request.user.is_admin_role %}
+    <form method="post" action="{% url 'documents:archive' document.pk %}" class="document-detail-archive">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'documents:detail' document.pk %}">
+      <button type="submit" class="btn btn-danger">{% if document.is_archived %}Restaurer{% else %}Archiver{% endif %}</button>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+
+<section class="panel">
+  <h2>Historique récent</h2>
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Détails</th></tr></thead>
+    <tbody>
+      {% for entry in document.history.all|slice:":10" %}
+      <tr>
+        <td>{{ entry.created_at|date:"d/m/Y H:i" }}</td>
+        <td>{{ entry.user.name|default:"Système" }}</td>
+        <td>{{ entry.get_action_display }}</td>
+        <td>{{ entry.details|default:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="empty-row">Aucun événement.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

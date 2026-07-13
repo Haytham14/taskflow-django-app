@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Supprimer le projet · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Projets</p>
+    <h1>Supprimer le projet</h1>
+  </div>
+</header>
+
+<div class="panel form-panel">
+  <p>Voulez-vous vraiment supprimer <strong>{{ object.name }}</strong> ? Les tâches resteront conservées, mais elles ne seront plus liées à ce projet.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a href="{% url 'projects:project_list' %}" class="btn btn-ghost">Annuler</a>
+      <button type="submit" class="btn btn-danger">Supprimer le projet</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

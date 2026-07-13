@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Supprimer la tâche · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Tableau des tâches</p>
+    <h1>Supprimer la tâche</h1>
+  </div>
+</header>
+
+<div class="panel form-panel">
+  <p>Voulez-vous vraiment supprimer <strong>{{ object.title }}</strong> ? Cette action est irréversible.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions">
+      <a href="{% url 'tasks:board' %}" class="btn btn-ghost">Annuler</a>
+      <button type="submit" class="btn btn-danger">Supprimer la tâche</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

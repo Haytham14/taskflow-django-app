@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Gestion des habilitations · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Espace de travail</p>
+    <h1>Gestion des habilitations</h1>
+  </div>
+  <a href="{% url 'access_control:request_create' %}" class="btn btn-primary">+ Nouvelle demande</a>
+</header>
+
+<section class="stat-grid access-stat-grid">
+  <article class="stat-card"><span>Demandes en attente</span><strong>{{ pending_count }}</strong></article>
+  <article class="stat-card"><span>Habilitations actives</span><strong>{{ active_count }}</strong></article>
+  <article class="stat-card"><span>Accès expirant bientôt</span><strong>{{ expiring_count }}</strong></article>
+  <article class="stat-card"><span>Accès révoqués</span><strong>{{ revoked_count }}</strong></article>
+  <article class="stat-card"><span>Demandes refusées</span><strong>{{ rejected_count }}</strong></article>
+  <article class="stat-card"><span>Accès critiques</span><strong>{{ critical_count }}</strong></article>
+</section>
+
+<div class="panel">
+  <div class="panel-title-row">
+    <h2>Dernières demandes</h2>
+    <a href="{% url 'access_control:request_list' %}" class="btn btn-ghost">Toutes les demandes</a>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Demandeur</th>
+        <th>Habilitation</th>
+        <th>Type</th>
+        <th>Statut</th>
+        <th>Étape actuelle</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for request_item in latest_requests %}
+      <tr>
+        <td>{{ request_item.requester.name|default:"-" }}</td>
+        <td>{{ request_item.habilitation.application }}</td>
+        <td>{{ request_item.get_access_type_display }}</td>
+        <td><span class="access-badge access-status-{{ request_item.status|lower }}">{{ request_item.get_status_display }}</span></td>
+        <td>{{ request_item.current_step }}</td>
+        <td>{{ request_item.created_at|date:"j F Y" }}</td>
+        <td class="table-actions">
+          <a href="{% url 'access_control:request_detail' request_item.pk %}" class="access-action access-action-primary">Ouvrir</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="empty-row">Aucune demande pour le moment.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

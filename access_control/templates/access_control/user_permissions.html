@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Profils & permissions · TaskFlow{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Gestion des utilisateurs</p>
+    <h1>Profils & permissions</h1>
+  </div>
+  <a href="{% url 'accounts:user_list' %}" class="btn btn-primary">Gérer les comptes</a>
+</header>
+
+<section class="stat-grid user-admin-stats">
+  <article class="stat-card"><span>Profils métiers</span><strong>{{ total_profiles }}</strong></article>
+  <article class="stat-card"><span>Permissions listées</span><strong>{{ total_permissions }}</strong></article>
+  <article class="stat-card"><span>Auditeurs</span><strong>{{ auditors }}</strong></article>
+</section>
+
+<div class="panel">
+  <div class="panel-title-row">
+    <h2>Matrice d'accès par profil</h2>
+    <span class="muted">Lecture fonctionnelle des droits applicatifs</span>
+  </div>
+  <table class="data-table permission-matrix">
+    <thead>
+      <tr>
+        <th>Profil</th>
+        {% for column in columns %}<th>{{ column }}</th>{% endfor %}
+        <th>Utilisateurs</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for profile in profiles %}
+      <tr>
+        <td><strong>{{ profile.label }}</strong></td>
+        {% for granted in profile.grants %}
+        <td>{% if granted %}<span class="permission-check">✓</span>{% else %}<span class="permission-empty">-</span>{% endif %}</td>
+        {% endfor %}
+        <td>{{ profile.users }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Détail des permissions</h2>
+  <div class="permission-profile-grid">
+    {% for profile in profiles %}
+    <article class="permission-profile">
+      <h3>{{ profile.label }}</h3>
+      <ul>
+        {% for permission in profile.permissions %}
+        <li>{{ permission }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+<section class="date-filter">
+  <div class="filter-pills">
+    <a href="?range=today" class="filter-pill {% if active_range == 'today' %}active{% endif %}">Aujourd'hui</a>
+    <a href="?range=week" class="filter-pill {% if active_range == 'week' %}active{% endif %}">Cette semaine</a>
+    <a href="?range=month" class="filter-pill {% if active_range == 'month' %}active{% endif %}">Ce mois-ci</a>
+  </div>
+
+  <form method="get" class="custom-range-form">
+    <input type="hidden" name="range" value="custom">
+
+    <!-- No-JS-safe native inputs. JS hides this and shows a calendar
+         dropdown instead, but the real inputs (and this whole form) keep
+         working exactly as-is if JavaScript never loads. -->
+    <div class="date-range-native">
+      <label class="sr-only" for="range-start">Du</label>
+      <input type="date" id="range-start" name="start" value="{{ range_start|date:'Y-m-d' }}" class="input date-input range-start-input">
+      <span class="range-sep">&rarr;</span>
+      <label class="sr-only" for="range-end">Au</label>
+      <input type="date" id="range-end" name="end" value="{{ range_end|date:'Y-m-d' }}" class="input date-input range-end-input">
+    </div>
+
+    <button
+      type="submit"
+      class="btn btn-ghost custom-range-submit {% if active_range == 'custom' %}active-custom{% endif %}"
+      title="Appliquer la période personnalisée"
+      aria-label="Appliquer la période personnalisée"
+    >
+      <svg class="ui-icon" aria-hidden="true"><use href="#nav-icon-search"></use></svg>
+    </button>
+  </form>
+</section>
+{% if active_range %}
+<p class="range-caption">Période affichée : {{ range_start|date:"j F Y" }} – {{ range_end|date:"j F Y" }}</p>
+{% endif %}
