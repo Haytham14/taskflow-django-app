@@ -2886,6 +2886,15 @@ html:has(.theme-dark),
   text-align: right;
 }
 
+/* Keep task period controls on the page canvas, like the calendar toolbar. */
+.theme-dark .task-dashboard-main .dashboard-period-shell,
+.theme-dark .task-dashboard-main .dashboard-period-shell > .date-filter,
+.theme-dark .task-board-main > .date-filter {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .dashboard-command-panel {
   display: grid;
   grid-template-columns: minmax(260px, .65fr) minmax(0, 1.35fr);
