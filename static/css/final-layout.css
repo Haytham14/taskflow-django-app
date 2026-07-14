@@ -2889,10 +2889,18 @@ html:has(.theme-dark),
 /* Keep task period controls on the page canvas, like the calendar toolbar. */
 .theme-dark .task-dashboard-main .dashboard-period-shell,
 .theme-dark .task-dashboard-main .dashboard-period-shell > .date-filter,
-.theme-dark .task-board-main > .date-filter {
+.theme-dark .task-board-main > .date-filter,
+.theme-dark .task-board-main > .date-filter .custom-range-form {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
+}
+
+.theme-dark .task-dashboard-main .dashboard-period-shell .date-range-trigger,
+.theme-dark .task-dashboard-main .dashboard-period-shell .custom-range-submit,
+.theme-dark .task-board-main > .date-filter .date-range-trigger,
+.theme-dark .task-board-main > .date-filter .custom-range-submit {
+  background: transparent !important;
 }
 
 .dashboard-command-panel {
