@@ -180,6 +180,7 @@
 .calendar-statistics .is-overdue strong { color: #d94a45; }
 .calendar-statistics .is-completed strong { color: #26935d; }
 .calendar-statistics .is-undated strong { color: #b57919; }
+.theme-dark .calendar-statistics .is-total strong { color: #fff; }
 
 .calendar-surface {
   position: relative;

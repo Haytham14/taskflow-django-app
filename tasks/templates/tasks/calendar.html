@@ -4,7 +4,7 @@
 {% block title %}Calendrier des tâches · TaskFlow{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/task-calendar.css' %}?v=20260711-color-hover-fixes">
+<link rel="stylesheet" href="{% static 'css/task-calendar.css' %}?v=20260716-white-total-stat">
 {% endblock %}
 
 {% block content %}
@@ -61,7 +61,7 @@
   </div>
 
   <div class="calendar-statistics" id="calendar-statistics" aria-live="polite">
-    <article><strong data-stat="total">–</strong><span>Tâches dans la période</span></article>
+    <article class="is-total"><strong data-stat="total">–</strong><span>Tâches dans la période</span></article>
     <article class="is-overdue"><strong data-stat="overdue">–</strong><span>En retard</span></article>
     <article class="is-completed"><strong data-stat="completed">–</strong><span>Terminées</span></article>
     <button type="button" class="calendar-stat-card is-undated" id="calendar-undated">
